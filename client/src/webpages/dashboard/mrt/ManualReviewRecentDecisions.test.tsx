@@ -31,15 +31,18 @@ let rejectDownload = false;
 let finishDownload: (() => void) | undefined;
 const downloadQuery = vi.fn(async () => {
   lazyCalls += 1;
-  if (lazyCalls === 2) {
+  // The table query runs once on mount. Download pages follow: return a
+  // decision first, then an empty page so pagination stops.
+  if (lazyCalls >= 3) {
     if (rejectDownload) {
       throw new Error('download query failed');
     }
     await new Promise<void>((resolve) => {
       finishDownload = resolve;
     });
+    return { data: { getRecentDecisions: [] } };
   }
-  return { data: { getRecentDecisions: [] } };
+  return { data: { getRecentDecisions: [fakeDecision] } };
 });
 
 vi.mock('../../../graphql/generated', async () => {
@@ -129,6 +132,7 @@ describe('Recent Decisions Download spinner', () => {
       expect(revokeObjectURL).toHaveBeenCalledWith('blob:decisions');
       expect(download).not.toHaveClass('ant-btn-loading');
     });
+    expect(downloadQuery).toHaveBeenCalledTimes(3);
   });
 
   it('reports an error and stops loading when the query fails', async () => {
@@ -152,5 +156,6 @@ describe('Recent Decisions Download spinner', () => {
       );
       expect(download).not.toHaveClass('ant-btn-loading');
     });
+    expect(downloadQuery).toHaveBeenCalledTimes(3);
   });
 });

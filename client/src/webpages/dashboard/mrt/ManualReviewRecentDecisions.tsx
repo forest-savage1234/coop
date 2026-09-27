@@ -711,9 +711,10 @@ export default function ManualReviewRecentDecisions() {
                 ),
               },
             });
-            if (result.data) {
-              decisions.push(result.data);
+            if (!result.data || result.data.getRecentDecisions.length === 0) {
+              break;
             }
+            decisions.push(result.data);
           }
           const allDecisions = decisions.flatMap((it) => it.getRecentDecisions);
           const allDecisionsCsv = allDecisions.map((decision) => {
