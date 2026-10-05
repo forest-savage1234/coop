@@ -1,7 +1,8 @@
+import { toast } from '@/coop-ui/Toast';
 import { HOST_URL } from '@/lib/config';
 import { filterNullOrUndefined } from '@/utils/collections';
 import { gql } from '@apollo/client';
-import { Button, Checkbox, Input, message, Tooltip } from 'antd';
+import { Button, Checkbox, Input, Tooltip } from 'antd';
 import {
   ChevronLeft,
   ChevronRight,
@@ -711,6 +712,9 @@ export default function ManualReviewRecentDecisions() {
                 ),
               },
             });
+            if (result.error) {
+              throw result.error;
+            }
             if (!result.data || result.data.getRecentDecisions.length === 0) {
               break;
             }
@@ -748,11 +752,13 @@ export default function ManualReviewRecentDecisions() {
               decisionReason: decision.decisionReason ?? '',
             };
           });
+          // Define the CSV headers
           const headers = [...RECENT_DECISIONS_CSV_HEADERS];
 
+          // Map the data to CSV rows
           const rows = allDecisionsCsv.map((item) => [
             JSON.stringify(item.decisions),
-            JSON.stringify(item.policies),
+            JSON.stringify(item.policies), // Convert array/object to JSON string if necessary
             item.reviewer,
             item.queue,
             item.jobCreatedAt,
@@ -764,21 +770,25 @@ export default function ManualReviewRecentDecisions() {
             `${HOST_URL}/dashboard/manual_review/recent?jobId=${item.jobId}`,
           ]);
 
+          // Combine the headers and rows into a CSV string
           const csvContent = [headers, ...rows]
-            .map((row) => row.map(toCsvField).join(','))
+            .map((row) => row.map(toCsvField).join(',')) // RFC 4180: quote fields and escape embedded quotes
             .join('\n');
 
+          // Create a Blob from the CSV content
           const blob = new Blob([csvContent], { type: 'text/csv' });
           const url = URL.createObjectURL(blob);
 
+          // Create a temporary link to download the Blob
           const a = document.createElement('a');
           a.href = url;
-          a.download = 'decisions.csv';
+          a.download = 'decisions.csv'; // Set the desired file name
           a.click();
 
+          // Clean up
           URL.revokeObjectURL(url);
         } catch {
-          message.error(
+          toast.error(
             'Could not download recent decisions. Please try again.',
           );
         } finally {
