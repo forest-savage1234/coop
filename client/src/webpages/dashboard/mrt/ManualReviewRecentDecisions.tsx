@@ -788,9 +788,7 @@ export default function ManualReviewRecentDecisions() {
           // Clean up
           URL.revokeObjectURL(url);
         } catch {
-          toast.error(
-            'Could not download recent decisions. Please try again.',
-          );
+          toast.error('Could not download recent decisions. Please try again.');
         } finally {
           setIsDownloadingDecisions(false);
         }
